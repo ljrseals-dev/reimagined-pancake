@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# Push the standalone source (about 1.6 MB, 130 files) to https://github.com/ljrseals-dev/upgraded-broccoli
+# Run from an empty working directory. Needs git, and either `gh auth login` or a personal access token / SSH key.
+set -euo pipefail
+git clone https://github.com/ljrseals-dev/upgraded-broccoli.git
+cd upgraded-broccoli
+# 1) unpack the PORTABLE zip (no vendor/) on top of the clone:
+unzip -o ../aoc-magic-studio-standalone-5.1.0-portable.zip -d ..        # creates ../aoc-magic-studio-standalone/
+cp -R ../aoc-magic-studio-standalone/. .
+# 2) use the cleaned README and .gitignore from this folder:
+cp ../README.md ./README.md
+cp ../.gitignore ./.gitignore
+# 3) keep the pitch email out of the repository (move it somewhere private) and check what will be committed
+git rm -q --ignore-unmatch NOTE WARNING 2>/dev/null || true       # only if those two files are leftovers; read them first
+find . -path ./.git -prune -o -type f -size +50M -print            # must print nothing
+git add -A
+git status --short | head -40
+git commit -m "Add AOC Magic Studio standalone source; README without correspondence"
+git push origin main
+# 4) publish the 16 MB bundled edition as a Release asset instead:
+#    gh release create v5.1.0 ../aoc-magic-studio-standalone-5.1.0-bundled-linux-x86_64-cp312.zip --title "5.1.0 bundled (Linux x86_64, CPython 3.12)" --notes "Includes numpy + OpenBLAS."
